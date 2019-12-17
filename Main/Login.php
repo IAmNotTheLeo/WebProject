@@ -1,3 +1,34 @@
+<?php 
+
+require_once 'Connection.php';
+session_start();
+if (isset($_POST['LoginInto'])) {
+  $inputIDLogin = $_POST['StuID'];
+  $inputPasswordLogin = md5($_POST['StuPassword']);
+
+  $queryLogin = "SELECT * FROM UserTable WHERE UserID = '$inputIDLogin' AND UserPassword = '$inputPasswordLogin'";
+  $resultLogin = $connect->query($queryLogin);
+
+  if ($resultLogin->num_rows > 0) {
+
+    $row = $resultLogin->fetch_array();
+
+    if ($row['UserLevel'] == "Student") {
+      $_SESSION['SessionStudent'] = $row['UserLevel'];
+      $_SESSION['StudentIDNum'] = $row['UserID'];
+      $_SESSION['StudentGroupNum'] = $row['UserGroup'];
+      header("Location: StudentPage.php");
+    } else {
+      $_SESSION['SessionTutor'] = $row['UserLevel'];
+      header("Location: TutorPage.php");
+    }
+
+  } else {
+    $errorLogin = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Username or Password Incorrect</strong> - Please Enter Valid Login</div>";
+  }
+
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,7 +41,6 @@
   	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
 	</head>
 <body>
-
 	<nav class="navbar bg-dark navbar-dark">
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
     <span class="navbar-toggler-icon"></span>
@@ -18,34 +48,27 @@
   <div class="collapse navbar-collapse" id="collapsibleNavbar">
     <ul class="navbar-nav">
       <li class="nav-item">
-        <a class="nav-link" href="#">Homepage</a>
-      </li>
-      <li class="nav-item">
         <a class="nav-link" href="Register.php">Register</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Login</a>
-      </li>    
     </ul>
   </div>  
 </nav>
 <br>
-
 <div class="container">
   <h2>Login</h2>
   <form method="POST">
     <div class="form-group">
-      <label for="studentID">Student ID:</label>
-      <input type="text" class="form-control" id="studentID" placeholder="Student ID" name="StuID" >
+      <label for="studentID">ID:</label>
+      <input type="text" class="form-control" maxlength="9" id="studentID" placeholder="Student ID" name="StuID" >
     </div>
     <div class="form-group">
       <label for="pwd">Password:</label>
-      <input type="password" class="form-control" id="pwd" placeholder="Password" name="pswd" >
+      <input type="password" class="form-control" id="pwd" placeholder="Password" name="StuPassword" >
     </div>
-    <button type="submit" class="btn btn-outline-success">Login</button>
+    <?php echo $errorLogin; ?>
+    <button type="submit" name="LoginInto" class="btn btn-outline-success">Login</button>
   </form>
 </div>
-</script>
-
+<br/>
 </body>
 </html>
