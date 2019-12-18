@@ -4,14 +4,26 @@ require_once 'Connection.php';
 $groupNum = $_SESSION['StudentGroupNum'];
 $level = $_SESSION['SessionStudent'];
 $id = $_SESSION['StudentIDNum'];
+$stuSelect = $_POST['selectMember'];
 
 $queryGroupMem = "SELECT * FROM UserTable WHERE UserGroup = '$groupNum' AND UserLevel = '$level' AND UserID != '$id'";
 $resultGroupMem = $connect->query($queryGroupMem);
 
+$queryEva = "SELECT * FROM Evaluation WHERE EvaluationFrom = '$id' AND EvaluationTo = '$stuSelect'";
+$resultEva = $connect->query($queryEva);
 
 if (isset($_POST['EvaluateStu'])) {
-	$_SESSION['SelectedMem'] = $_POST['selectMember'];
-	header("Location: EvaluationPage.php");
+
+while ($row = $resultEva->fetch_array()){
+    $final = $row['Finalised'];
+  }
+  if ($final == 1) {
+      $msg = "<div class='alert alert-danger'><strong>Student Already Evaluated</strong></div>";
+    }
+    else {
+	   $_SESSION['SelectedMem'] = $stuSelect;
+	   header("Location: EvaluationPage.php");
+  }
 }
 
 ?>
@@ -54,6 +66,7 @@ if (isset($_POST['EvaluateStu'])) {
         ?>  
       </select>
     </div>
+    <?php echo $msg ?>
     <div class="text-center"> 
     <button style="padding: 10px 50px 10px 50px;" type="submit" name="EvaluateStu" class="btn btn-outline-success">Evaluate</button>
 	</div>

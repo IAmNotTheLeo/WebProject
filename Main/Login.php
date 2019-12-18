@@ -2,10 +2,10 @@
 
 require_once 'Connection.php';
 session_start();
-if (isset($_POST['LoginInto'])) {
-  $inputIDLogin = $_POST['StuID'];
-  $inputPasswordLogin = md5($_POST['StuPassword']);
+$inputIDLogin = $_POST['StuID'];
+$inputPasswordLogin = md5($_POST['StuPassword']);
 
+if (isset($_POST['LoginInto'])) {
   $queryLogin = "SELECT * FROM UserTable WHERE UserID = '$inputIDLogin' AND UserPassword = '$inputPasswordLogin'";
   $resultLogin = $connect->query($queryLogin);
 
@@ -26,7 +26,6 @@ if (isset($_POST['LoginInto'])) {
   } else {
     $errorLogin = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Username or Password Incorrect</strong> - Please Enter Valid Login</div>";
   }
-
 }
 ?>
 <!DOCTYPE html>
@@ -59,7 +58,7 @@ if (isset($_POST['LoginInto'])) {
   <form method="POST">
     <div class="form-group">
       <label for="studentID">ID:</label>
-      <input type="text" class="form-control" maxlength="9" id="studentID" placeholder="Student ID" name="StuID" >
+      <input value="<?php if(isset($inputIDLogin)) echo $inputIDLogin; ?>" type="text" class="form-control" maxlength="9" id="studentID" placeholder="Student ID" name="StuID" >
     </div>
     <div class="form-group">
       <label for="pwd">Password:</label>

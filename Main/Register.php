@@ -3,15 +3,15 @@
 require_once 'Connection.php';
 session_start();
 
-if(isset($_POST['CreateAccount'])){
-    $inputID = $_POST['StuID'];
-    $inputEmail = $_POST['StuEmail'];
-    $inputPassword = $_POST['StuPassword'];
-    $selectedGroup = $_POST['stuGroup'];
-    $inputCaptcha = $_POST['StuCAPTCHA'];
-    $error = array();
-    $captchaCorrect = str_replace(' ','', $_SESSION['CAPTCHA']);
+$inputID = $_POST['StuID'];
+$inputEmail = $_POST['StuEmail'];
+$inputPassword = $_POST['StuPassword'];
+$selectedGroup = $_POST['stuGroup'];
+$inputCaptcha = $_POST['StuCAPTCHA'];
+$error = array();
+$captchaCorrect = str_replace(' ','', $_SESSION['CAPTCHA']);
 
+if(isset($_POST['CreateAccount'])){
     $queryExist = "SELECT * FROM UserTable WHERE UserID = '". $inputID ."'";
     $resultExist = $connect->query($queryExist);
 
@@ -69,7 +69,7 @@ if(isset($_POST['CreateAccount'])){
     if (count($error) == 0) {
       $queryCreate = "INSERT INTO UserTable (UserID, UserEmail, UserPassword, UserGroup, UserLevel) VALUES ('". $inputID ."', '". $inputEmail ."', '". md5($inputPassword) ."', '". $selectedGroup ."', 'Student')";
       $connect->query($queryCreate);
-      $msg = "<script>Swal.fire({type: 'success',title: 'Account Created',allowOutsideClick: false,confirmButtonText: 'Proceed',}).then((result) => {if (result.value) {location.href = 'Login.php';}})</script>";
+      $msg = "<script>Swal.fire({icon: 'success',title: 'Account Created',allowOutsideClick: false,confirmButtonText: 'Proceed',}).then((result) => {if (result.value) {location.href = 'Login.php';}})</script>";
       
       //$msg = "<script>alert('Account Created'); window.location.href='Login.php';</script>";
 
@@ -113,12 +113,12 @@ if(isset($_POST['CreateAccount'])){
   <form method="POST">
     <div class="form-group">
       <label for="studentID">Student ID:</label>
-      <input type="text" class="form-control" id="studentID" placeholder="ID" maxlength="9" name="StuID">
+      <input value="<?php if(isset($inputID)) echo $inputID; ?>" type="text" class="form-control" id="studentID" placeholder="ID" maxlength="9" name="StuID">
     </div>
     <?php echo $errorID; ?>
     <div class="form-group">
       <label for="email">Student Email:</label>
-      <input type="email" class="form-control" id="email" placeholder="Email" name="StuEmail">
+      <input value="<?php if(isset($inputEmail )) echo $inputEmail ; ?>" type="email" class="form-control" id="email" placeholder="Email" name="StuEmail">
     </div>
     <?php echo $errorEmail; ?>
     <div class="form-group">
@@ -127,19 +127,20 @@ if(isset($_POST['CreateAccount'])){
     </div>
     <?php echo $errorPass; ?>
     <div class="form-group">
+      <?php $group = range(1, 10); ?>
       <label for="group">Select Group:</label>
       <select class="form-control" id="group" name="stuGroup">
         <option value="" hidden selected disabled>Select Group</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
-        <option value="10">10</option>        
+        <?php foreach ($group as $selectedOne) { 
+          if ($selectedOne == $selectedGroup) {
+            $select = "selected='selected'";
+          }
+          else { 
+          $select = ""; 
+          }
+          echo "<option value='". $selectedOne ."' ". $select ." >". "Group " . $selectedOne ."</option>";
+          }
+          ?>     
       </select>
     </div>
     <?php echo $errorGroup; ?>
