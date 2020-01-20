@@ -14,13 +14,12 @@ $captchaString = $charArray[0];
 for ($i=1; $i<5; $i++) {
     $_SESSION['CAPTCHA'] = $captchaString .= ' ' . $charArray[$i];
 }
-
-$charNumber = array('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19');
+$charNumber = range(1, 19);
+$max = 18;
 shuffle($charNumber);
-
 $numRan = $charNumber[0];
-for ($i=1; $i<18; $i++) {
-      $numRan = $charNumber[$i];
+for ($i=1; $i< $max; $i++) {
+    $numRan = $charNumber[$i];
 }
 // $numRan changes the position of captcha String
 ImageString($image, 10, $numRan, $numRan, $captchaString, $textColour);

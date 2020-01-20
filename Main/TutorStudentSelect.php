@@ -2,21 +2,29 @@
 session_start();
 require_once 'Connection.php';
 require 'Session.php';
-$selectGroup = $_POST['TutorSelect'];
-if (isset($_POST['groupBtn'])) {
-if (empty($selectGroup)) {
-    $errorSelect = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Select Group</strong></div>";
+$StudentShow = $_POST['TutorSelectStu']; 
+$group = $_SESSION['groupSelect'];
+
+$querySelectStu = "SELECT * FROM User WHERE UserGroup = '". $group ."'";
+$resultSelectStu = $connect->query($querySelectStu);
+
+if (isset($_POST['selectStuBtn'])) {
+  if (empty($StudentShow)) {
+    $errorSelect = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Select Student</strong></div>";
   } else {
-    $_SESSION['groupSelect'] = $selectGroup;
-    header("Location: TutorStudentSelect.php");
+    $_SESSION['studentSelect'] = $StudentShow;
+    header("Location: ViewStudent.php");
   }
 }
 
+
 ?>
+
+
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Tutor</title>
+	<title>Evaluation</title>
 	<meta charset="utf-8">
   	<meta name="viewport" content="width=device-width, initial-scale=1">
   	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
@@ -34,6 +42,9 @@ if (empty($selectGroup)) {
   <div class="collapse navbar-collapse" id="collapsibleNavbar">
     <ul class="navbar-nav">
       <li class="nav-item">
+        <a class="nav-link" href="TutorPage.php">Return</a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link" href="Search.php">Search</a>
       </li>
       <li class="nav-item">
@@ -46,26 +57,20 @@ if (empty($selectGroup)) {
 <div class="container">
   <form method="POST">
   <h4>Tutor: </h4>
-  <div class="form-group">
-    
-      <label for="group">Select Group:</label>
-      <select class="form-control" id="group" name="TutorSelect">
-        <option value="" hidden selected disabled>Select Group</option>
-        <?php 
-        // Will only display group that are available
-        for ($i=1; $i <= 10; $i++) { 
-            $queryGroupLimit = "SELECT * FROM User WHERE UserGroup = '". $i ."'";
-            $resultGroupLimit = $connect->query($queryGroupLimit);
-            if ($resultGroupLimit->num_rows >= 2) {
-              echo "<option value='". $i ."' ".$select ." >". "Group " . $i ."</option>";
-            } 
-          } 
-        ?>     
+      <div class="form-group">
+      <label for="group">Select Student:</label>
+      <select class="form-control" id="group" name="TutorSelectStu">
+      <option value="" hidden selected disabled>Select Student</option>
+      <?php 
+      while ($row = $resultSelectStu->fetch_array()) {
+        echo "<option value='". $row['UserID'] ."'>". $row['UserID'] ."</option>";
+      }
+      ?>
       </select>
     </div>
     <?php echo $errorSelect; ?>
     <div class="form-group">
-      <button style="padding: 10px 50px 10px 50px;" type="submit" name="groupBtn" class="btn btn-outline-success">Proceed</button>
+      <button style="padding: 10px 50px 10px 50px;" type="submit" name="selectStuBtn" class="btn btn-outline-success">Proceed</button>
     </div>
 </form>
 </div>

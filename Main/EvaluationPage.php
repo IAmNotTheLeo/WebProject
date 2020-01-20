@@ -1,24 +1,29 @@
 <?php
 session_start();
 require_once 'Connection.php';
+require 'Session.php';
 $selectGrade = $_POST['gradeMark'];
 $inputFeedback = $_POST['evaFeedback'];
-$uploadImage = $_FILES['fileUpload']['tmp_name'];
+if (!($_FILES['fileUpload']['type'])) {
+} else {
+  $uploadImage = addslashes(file_get_contents($_FILES['fileUpload']['tmp_name']));
+}
 $imageType = $_FILES['fileUpload']['type'];
 $evaTO = $_SESSION['SelectedMem'];
 $evaFROM = $_SESSION['StudentIDNum'];
+$groupNum = $_SESSION['StudentGroupNum'];
 $error = array();
-$queryEva = "SELECT * FROM Evaluation WHERE EvaluationFrom = '$evaFROM' AND EvaluationTo = '$evaTO'";
+$queryEva = "SELECT * FROM Finalise WHERE StudentFrom = '$evaFROM' AND StudentTo = '$evaTO'";
 $resultEva = $connect->query($queryEva);
+
+$querySvd = "SELECT * FROM Saved WHERE StudentFrom = '$evaFROM' AND StudentTo = '$evaTO'";
+$resultSvd = $connect->query($querySvd);
 
 
 if (isset($_POST['FinaliseBtn']) || isset($_POST['SaveBtn'])) {
-  while ($row = $resultEva->fetch_array()){
-    $final = $row['Finalised'];
-  }
-    if ($final == 1) {
-      $msg = "<div style='text-align: center; font-size: 20px;' class='alert alert-danger'><strong>Student Already Evaluated</strong></div>";
-    } else {
+  if ($resultEva->num_rows == 1) {
+    $msg = "<div style='text-align: center; font-size: 20px;' class='alert alert-danger'><strong>Student Already Evaluated</strong></div>";
+  } else {
   if (empty($selectGrade)) {
     $errorSelect = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Select Grade</strong></div>";
       array_push($error, '1');
@@ -28,60 +33,65 @@ if (isset($_POST['FinaliseBtn']) || isset($_POST['SaveBtn'])) {
       array_push($error, '2');
   }
 
-  if (!($_FILES['uploadImage']['type'])) {
-  } else if (!preg_match('/(gif|png|x-png|jpeg|jpg)/', $_FILES['fileUpload']['type'])) {
+  if (!($_FILES['fileUpload']['type'])) {
+  
+  } 
+  else if (!preg_match('/(gif|png|x-png|jpeg|jpg)/', $_FILES['fileUpload']['type'])) {
     $errorImage = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Image File Incompatible</strong></div>";
     array_push($error, '3');
-  }
-
-  if ($_FILES['fileUpload']['size'] > 16384) {
-    $errorImage = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Image File Too Large</strong></div>";
+  } 
+  else if ($_FILES['fileUpload']['size'] > 16384) {
+    $errorImage = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>File Too Large</strong></div>";
     array_push($error, '4');
   }
 
   if (count($error) == 0) {
-
     if (isset($_POST['FinaliseBtn'])) {
-      $finalEva = 1;
-      if ($resultEva->num_rows == 0) {
-        $queryFinal = "INSERT INTO Evaluation (Grade, Feedback, Image, ImageType, EvaluationFrom, EvaluationTo, Finalised) VALUES ('". $selectGrade ."', '".$inputFeedback ."', '". $uploadImage ."', '". $imageType ."', '". $evaFROM ."', '". $evaTO ."', '". $finalEva ."')";
+        $queryFinal = "INSERT INTO Finalise (Grade, Feedback, Image, ImageType, StudentFrom, StudentTo) VALUES ('". $selectGrade ."', '".$inputFeedback ."', '". $uploadImage ."', '". $imageType ."', '". $evaFROM ."', '". $evaTO ."')";
+        $connect->query($queryFinal);
+
+        $queryGradeTo = "SELECT * FROM Finalise WHERE StudentTo = '$evaTO'";
+        $resultGradeTo = $connect->query($queryGradeTo);
+
+        while ($row = $resultGradeTo->fetch_array()) {
+        if ($resultGradeTo->num_rows == 2) {
+          $result += $row['Grade'] / 2;
+          } else {
+            $result = NULL;
+          }
+        }
+        $queryGrade = "UPDATE User SET UserGrade = '$result' WHERE UserID = '$evaTO'";
+        $connect->query($queryGrade);
+        header("Location: StudentPage.php");
+      }
+    if (isset($_POST['SaveBtn'])) {
+      if ($resultSvd->num_rows == 0) {
+        $queryFinal = "INSERT INTO Saved (Grade, Feedback, StudentFrom, StudentTo) VALUES ('". $selectGrade ."', '".$inputFeedback ."', '". $evaFROM ."', '". $evaTO ."')";
         $connect->query($queryFinal);
         header("Location: StudentPage.php");
-      
       } else {
-        $queryUpdate = "UPDATE Evaluation SET Grade = '$selectGrade', Feedback = '$inputFeedback', Image = '$uploadImage', ImageType = '$imageType', Finalised = '$finalEva' WHERE EvaluationFrom = '$evaFROM' AND EvaluationTo = '$evaTO'";
+        $queryUpdate = "UPDATE Saved SET Grade = '$selectGrade', Feedback = '$inputFeedback' WHERE StudentFrom = '$evaFROM' AND StudentTo = '$evaTO'";
         $connect->query($queryUpdate);
         header("Location: StudentPage.php");
-      }
-
-      }
-      if (isset($_POST['SaveBtn'])) {
-      $finalEva = 0;
-        if ($resultEva->num_rows == 0) {
-      $queryFinal = "INSERT INTO Evaluation (Grade, Feedback, Image, ImageType, EvaluationFrom, EvaluationTo, Finalised) VALUES ('". $selectGrade ."', '". $inputFeedback ."', '". $uploadImage ."', '". $imageType ."', '". $evaFROM ."', '". $evaTO ."', '". $finalEva."')";
-        $connect->query($queryFinal);
-        header("Location: StudentPage.php");
-      } else {
-      $queryUpdate = "UPDATE Evaluation SET Grade = '$selectGrade', Feedback = '$inputFeedback', Image = '$uploadImage', ImageType = '$imageType', Finalised = '$finalEva' WHERE EvaluationFrom = '$evaFROM' AND EvaluationTo = '$evaTO'";
-      $connect->query($queryUpdate);
-      header("Location: StudentPage.php");
-      }
-
+        }
       }
     }
   }
 }
 
 if (isset($_POST['DeleteBtn'])) {
-  if ($resultEva->num_rows == 0) {
+  if ($resultEva->num_rows == 1) {
+    $msg = "<div style='text-align: center; font-size: 20px;' class='alert alert-danger'><strong>Student Already Evaluated</strong></div>";
+  } else {
+  if ($resultSvd->num_rows == 0) {
     $errorImage = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>No Record to Delete</strong></div>";
   } else {
-  $queryDelete = "DELETE FROM Evaluation WHERE EvaluationFrom = '$evaFROM' AND EvaluationTo = '$evaTO'";
+  $queryDelete = "DELETE FROM Saved WHERE StudentFrom = '$evaFROM' AND StudentTo = '$evaTO'";
   $connect->query($queryDelete);
   header("Location: StudentPage.php");
+    }
   }
 }
-
 ?>
 <!DOCTYPE html>
 <html>
@@ -90,8 +100,6 @@ if (isset($_POST['DeleteBtn'])) {
 	<meta charset="utf-8">
   	<meta name="viewport" content="width=device-width, initial-scale=1">
   	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="sweetalert2.min.css">
-    <script src="sweetalert2.min.js"></script>
   	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
   	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
@@ -114,13 +122,13 @@ if (isset($_POST['DeleteBtn'])) {
 </nav>
 <br>
 <div class="container">
-<?php 
-  while ($row = $resultEva->fetch_array()){
-    $final = $row['Finalised'];
+<?php
+
+while ($row = $resultSvd->fetch_array()){
     $savedGrade = $row['Grade'];
     $savedFeedback = $row['Feedback'];
-    }
-    if ($final == 1) {
+}
+    if ($resultEva->num_rows == 1) {
       $msg = "<div style='text-align: center; font-size: 20px;' class='alert alert-danger'><strong>Student Already Evaluated</strong></div>";
       echo $msg;
     } else {
@@ -129,20 +137,24 @@ if (isset($_POST['DeleteBtn'])) {
   <form method="POST" enctype="multipart/form-data">
     <div class="form-group">
       <label for="grade">Grade:</label>
-      <?php $grade = range(1, 10); ?>
       <select class="form-control" id="grade" name="gradeMark">
         <option value="" selected hidden disabled>Select Grade</option>
-        <?php foreach ($grade as $selectedOne) { 
-          if ($selectedOne == $savedGrade) {
-           $select = "selected='selected'"; 
-          } else if ($selectedOne == $selectGrade) {
-            $select = "selected='selected'";
+        <?php
+        
+          for ($i=1; $i <= 10; $i++) {
+            if ($savedGrade == $i) {
+              $select = "selected=''";
+            } 
+            elseif ($selectGrade >= $i && $selectGrade <= $i) {
+            $savedGrade = "";
+            $select = "selected=''";
+              }
+            else {
+              $select = "";
+            }
+            echo "<option value='". $i ."' ". $select .">". $i ."</option>";
           }
-          else { 
-          $select = ""; 
-          }
-          echo "<option value='". $selectedOne ."' ". $select ." >". $selectedOne ."</option>";
-          }
+                    
           ?>
       </select>
     </div>
@@ -176,6 +188,5 @@ if (isset($_POST['DeleteBtn'])) {
 </div>
 <?php } ?>
   <br/>
-
 </body>
 </html>

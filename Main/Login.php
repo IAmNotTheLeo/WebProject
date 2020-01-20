@@ -1,25 +1,27 @@
 <?php 
-
 require_once 'Connection.php';
 session_start();
 $inputIDLogin = $_POST['StuID'];
 $inputPasswordLogin = md5($_POST['StuPassword']);
+$cookieSet = setcookie("UserIdentification", $inputIDLogin, time() + 86400);
+$cookieIsset = $_COOKIE['UserIdentification'];
 
 if (isset($_POST['LoginInto'])) {
-  $queryLogin = "SELECT * FROM UserTable WHERE UserID = '$inputIDLogin' AND UserPassword = '$inputPasswordLogin'";
+  $queryLogin = "SELECT * FROM User WHERE UserID = '$inputIDLogin' AND UserPassword = '$inputPasswordLogin'";
   $resultLogin = $connect->query($queryLogin);
 
   if ($resultLogin->num_rows > 0) {
 
     $row = $resultLogin->fetch_array();
 
-    if ($row['UserLevel'] == "Student") {
-      $_SESSION['SessionStudent'] = $row['UserLevel'];
+    if ($row['UserID'] != "000000000") {
       $_SESSION['StudentIDNum'] = $row['UserID'];
       $_SESSION['StudentGroupNum'] = $row['UserGroup'];
+      $cookieSet;
       header("Location: StudentPage.php");
     } else {
-      $_SESSION['SessionTutor'] = $row['UserLevel'];
+      $cookieSet;
+      $_SESSION['TutorIDNum'] = $row['UserID'];
       header("Location: TutorPage.php");
     }
 
@@ -58,7 +60,7 @@ if (isset($_POST['LoginInto'])) {
   <form method="POST">
     <div class="form-group">
       <label for="studentID">ID:</label>
-      <input value="<?php if(isset($inputIDLogin)) echo $inputIDLogin; ?>" type="text" class="form-control" maxlength="9" id="studentID" placeholder="Student ID" name="StuID" >
+      <input value="<?php if(isset($inputIDLogin)) echo $inputIDLogin; elseif(isset($cookieIsset)) echo $cookieIsset; ?>" type="tel" class="form-control" maxlength="9" id="studentID" placeholder="ID" name="StuID" >
     </div>
     <div class="form-group">
       <label for="pwd">Password:</label>

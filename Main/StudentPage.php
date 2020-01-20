@@ -1,23 +1,19 @@
 <?php
 session_start();
 require_once 'Connection.php';
+require 'Session.php';
 $groupNum = $_SESSION['StudentGroupNum'];
-$level = $_SESSION['SessionStudent'];
 $id = $_SESSION['StudentIDNum'];
 $stuSelect = $_POST['selectMember'];
 
-$queryGroupMem = "SELECT * FROM UserTable WHERE UserGroup = '$groupNum' AND UserLevel = '$level' AND UserID != '$id'";
+$queryGroupMem = "SELECT * FROM User WHERE UserGroup = '$groupNum' AND UserID != '$id'";
 $resultGroupMem = $connect->query($queryGroupMem);
 
-$queryEva = "SELECT * FROM Evaluation WHERE EvaluationFrom = '$id' AND EvaluationTo = '$stuSelect'";
+$queryEva = "SELECT * FROM Finalise WHERE StudentFrom = '$id' AND StudentTo = '$stuSelect'";
 $resultEva = $connect->query($queryEva);
 
 if (isset($_POST['EvaluateStu'])) {
-
-while ($row = $resultEva->fetch_array()){
-    $final = $row['Finalised'];
-  }
-  if ($final == 1) {
+  if ($resultEva->num_rows == 1) {
       $msg = "<div class='alert alert-danger'><strong>Student Already Evaluated</strong></div>";
     }
     else {
@@ -25,7 +21,6 @@ while ($row = $resultEva->fetch_array()){
 	   header("Location: EvaluationPage.php");
   }
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -54,15 +49,16 @@ while ($row = $resultEva->fetch_array()){
 </nav>
 <br>
 <div class="container">
+  <?php if ($resultGroupMem->num_rows >= 2) { ?>
   <h4><?php echo "Student ID: " . $_SESSION['StudentIDNum']; ?></h4>
   <form method="POST">
   	<div class="form-group">
       <label for="mem">Select Student Member:</label>
       <select class="form-control" id="mem" name="selectMember">
         <?php 
-        while ($row = $resultGroupMem->fetch_array()) {
-        	echo "<option value='". $row['UserID'] ."'>". $row['UserID'] ."</option>";
-        }
+          while ($row = $resultGroupMem->fetch_array()) {
+          echo "<option value='". $row['UserID'] ."'>". $row['UserID'] ."</option>";
+          }
         ?>  
       </select>
     </div>
@@ -71,6 +67,11 @@ while ($row = $resultEva->fetch_array()){
     <button style="padding: 10px 50px 10px 50px;" type="submit" name="EvaluateStu" class="btn btn-outline-success">Evaluate</button>
 	</div>
   </form>
+<?php 
+} else {
+  echo "<div style='text-align: center; font-size: 20px;' class='alert alert-danger'><strong>Not Enough Students to Evaluate</strong><br/>Return when more Students Join</div>";
+} 
+?>
 </div>
 <br/>
 </body>

@@ -1,5 +1,4 @@
 <?php 
-
 require_once 'Connection.php';
 session_start();
 
@@ -12,16 +11,12 @@ $error = array();
 $captchaCorrect = str_replace(' ','', $_SESSION['CAPTCHA']);
 
 if(isset($_POST['CreateAccount'])){
-    $queryExist = "SELECT * FROM UserTable WHERE UserID = '". $inputID ."'";
+    $queryExist = "SELECT * FROM User WHERE UserID = '". $inputID ."'";
     $resultExist = $connect->query($queryExist);
-
-    $queryGroupLimit = "SELECT * FROM UserTable WHERE UserGroup = '". $selectedGroup ."'";
-    $resultGroupLimit = $connect->query($queryGroupLimit);
 
     if (empty($inputID) || trim($inputID) == '') {
       $errorID = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Student ID Required</strong></div>";
       array_push($error, '1');
-
     }
      else if (!is_numeric($inputID)) {
       $errorID = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Numbers Only</strong></div>";
@@ -52,28 +47,23 @@ if(isset($_POST['CreateAccount'])){
       array_push($error, '7');
     }
 
-    if ($resultGroupLimit->num_rows == 3) {
-      $errorGroup = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Group is Full</strong> - Select another Group</div>";
+    if (empty($selectedGroup)) {
+    $errorGroup = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>Select Group</strong></div>";
       array_push($error, '8');
     }
-
     if (empty($inputCaptcha) || trim($inputCaptcha) == '') {
         $errorCAP = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>CAPTCHA Required</strong></div>";
-        array_push($error, '9');
+        array_push($error, '10');
     }
     else if($inputCaptcha != $captchaCorrect){
-        $errorCAP = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>CAPTCHA Wrong</strong></div>";
-        array_push($error, '10');
+        $errorCAP = "<div class='alert alert-danger alert-dismissible fade show'><button type='button' class='close' data-dismiss='alert'>&times;</button><strong>CAPTCHA Incorrect</strong></div>";
+        array_push($error, '11');
     }
 
     if (count($error) == 0) {
-      $queryCreate = "INSERT INTO UserTable (UserID, UserEmail, UserPassword, UserGroup, UserLevel) VALUES ('". $inputID ."', '". $inputEmail ."', '". md5($inputPassword) ."', '". $selectedGroup ."', 'Student')";
+      $queryCreate = "INSERT INTO User (UserID, UserEmail, UserPassword, UserGroup) VALUES ('". $inputID ."', '". $inputEmail ."', '". md5($inputPassword) ."', '". $selectedGroup ."')";
       $connect->query($queryCreate);
-      $msg = "<script>Swal.fire({icon: 'success',title: 'Account Created',allowOutsideClick: false,confirmButtonText: 'Proceed',}).then((result) => {if (result.value) {location.href = 'Login.php';}})</script>";
-      
-      //$msg = "<script>alert('Account Created'); window.location.href='Login.php';</script>";
-
-// THIS IS THE ALERT YOU WOULD NEED - THE ONE COMMMENTED OUT
+      $msg = "<script>alert('Account Created'); window.location.href='Login.php';</script>";
 
     }
 }
@@ -85,9 +75,7 @@ if(isset($_POST['CreateAccount'])){
 	<title>Register</title>
 	<meta charset="utf-8">
   	<meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="sweetalert2.min.css">
   	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
-    <script src="sweetalert2.min.js"></script>
   	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
   	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
@@ -109,6 +97,14 @@ if(isset($_POST['CreateAccount'])){
 <br>
 
 <div class="container">
+  <?php 
+  $queryRegMax = "SELECT * FROM User WHERE UserID != '000000000'";
+  $resultRegMax = $connect->query($queryRegMax);
+
+  if ($resultRegMax->num_rows == 30) {
+    echo "<div style='text-align: center; font-size: 20px;' class='alert alert-danger'><strong>No More Student Registration Needed</strong></div>";
+    } else {
+  ?>
   <h2>Registration</h2>
   <form method="POST">
     <div class="form-group">
@@ -118,7 +114,7 @@ if(isset($_POST['CreateAccount'])){
     <?php echo $errorID; ?>
     <div class="form-group">
       <label for="email">Student Email:</label>
-      <input value="<?php if(isset($inputEmail )) echo $inputEmail ; ?>" type="email" class="form-control" id="email" placeholder="Email" name="StuEmail">
+      <input value="<?php if(isset($inputEmail)) echo $inputEmail ; ?>" type="email" class="form-control" id="email" placeholder="Email" name="StuEmail">
     </div>
     <?php echo $errorEmail; ?>
     <div class="form-group">
@@ -127,19 +123,23 @@ if(isset($_POST['CreateAccount'])){
     </div>
     <?php echo $errorPass; ?>
     <div class="form-group">
-      <?php $group = range(1, 10); ?>
       <label for="group">Select Group:</label>
       <select class="form-control" id="group" name="stuGroup">
         <option value="" hidden selected disabled>Select Group</option>
-        <?php foreach ($group as $selectedOne) { 
-          if ($selectedOne == $selectedGroup) {
-            $select = "selected='selected'";
-          }
-          else { 
-          $select = ""; 
-          }
-          echo "<option value='". $selectedOne ."' ". $select ." >". "Group " . $selectedOne ."</option>";
-          }
+        <?php
+        // Will only display group that are available
+          for ($i=1; $i <= 10; $i++) { 
+            $queryGroupLimit = "SELECT * FROM User WHERE UserGroup = '". $i ."'";
+            $resultGroupLimit = $connect->query($queryGroupLimit);
+            if ($resultGroupLimit->num_rows != 3) {
+              if ($i == $selectedGroup) {
+                $select = "selected='selected'";
+              } else {
+                $select = "";
+              }
+              echo "<option value='". $i ."' ".$select ." >". "Group " . $i ."</option>";
+            } 
+          }          
           ?>     
       </select>
     </div>
@@ -156,5 +156,6 @@ if(isset($_POST['CreateAccount'])){
     <br/>
 </div>
 <?php echo $msg; ?>
+<?php } ?>
 </body>
 </html>
