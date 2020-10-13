@@ -95,8 +95,7 @@ INSERT INTO `User` (`ID`, `UserID`, `UserEmail`, `UserPassword`, `UserGroup`, `U
 (21, '000000005', 'dsjkfh@gre.ac.uk', '0cc175b9c0f1b6a831c399e269772661', 2, 9),
 (24, '000000006', 'dsfkjh@gre.ac.uk', '0cc175b9c0f1b6a831c399e269772661', 2, 3),
 (27, '000000008', 'jdhfk@gre.ac.uk', '0cc175b9c0f1b6a831c399e269772661', 3, 4),
-(28, '000000009', 'dskjfh@gre.ac.uk', '0cc175b9c0f1b6a831c399e269772661', 3, 8),
-(52, '000980952', 'ma5151z@gre.ac.uk', 'ecf6f43b964250dc0c5ca78275fc4c5a', 8, NULL);
+(28, '000000009', 'dskjfh@gre.ac.uk', '0cc175b9c0f1b6a831c399e269772661', 3, 8);
 
 --
 -- Indexes for dumped tables
