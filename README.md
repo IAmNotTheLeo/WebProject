@@ -1,10 +1,7 @@
-# WebProject
+# WebProject - New Version
 
-##My Project by Leo Chimborazo
+## My Project by chiLee98
 
-###What is it?
+### What is it?
 Student Evaluation
 
-##Requirements
-Nothing
- 
